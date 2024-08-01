@@ -1,0 +1,2 @@
+# install-on-ubuntu20.04_wordpress_with_nginx_mariadb_php
+install-on-ubuntu20.04_wordpress_with_nginx_mariadb_php
