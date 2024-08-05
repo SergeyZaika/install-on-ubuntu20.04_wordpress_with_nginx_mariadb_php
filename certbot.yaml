@@ -3,8 +3,8 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: electrician.insidenet.net
-    wordpress_admin_email: info.ok@yahoo.com
+    domain: your.domain # Replace with the appropriate IP address
+    wordpress_admin_email: email@email.com
     php_version: "8.2"
 
   tasks:
@@ -40,7 +40,13 @@
       args:
         creates: /etc/letsencrypt/ssl-dhparams.pem
 
-    - name: Create Let's Encrypt directory structure
+    - name: Remove existing Let's Encrypt live directory (if exists)
+      file:
+        path: /etc/letsencrypt/live/{{ domain }}
+        state: absent
+      ignore_errors: yes
+
+    - name: Create Let's Encrypt live directory structure
       file:
         path: /etc/letsencrypt/live/{{ domain }}
         state: directory
@@ -69,7 +75,7 @@
     # Configure Nginx for WordPress
     - name: Configure Nginx for WordPress
       template:
-        src: templates/nginx_wordpress.j2
+        src: templates/nginx_wordpress_ssl.j2
         dest: /etc/nginx/sites-available/wordpress
       notify: Reload Nginx
 

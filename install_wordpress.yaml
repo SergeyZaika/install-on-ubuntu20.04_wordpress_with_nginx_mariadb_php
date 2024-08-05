@@ -3,7 +3,7 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: your.domain.com # Replace with the appropriate IP address
+    domain: your.domain # Replace with the appropriate IP address
     ubuntu_user: ubuntu
     php_version: "8.2" 
     php_packages:
@@ -16,11 +16,11 @@
       - "php{{ php_version }}-zip"
     db_name: wordpress # Replace with the appropriate name
     db_user: wpuser # Replace with the appropriate name
-    db_password: Your_db_password
-    root_db_password: YourRootPasswordHere
+    db_password: password
+    root_db_password: password
     wordpress_admin_user: admin
-    wordpress_admin_password: Your_wordpress_admin_password
-    wordpress_admin_email: mail@mail.your-email
+    wordpress_admin_password: password
+    wordpress_admin_email: email@email.com
     remote_wordpress_file: /tmp/latest.tar.gz
     wordpress_install_dir: /var/www/html/my_wordpress_site
 
