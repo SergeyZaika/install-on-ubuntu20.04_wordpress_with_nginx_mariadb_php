@@ -11,7 +11,7 @@ Clone the repository:
 
 sh
 Copy code
-git clone https://github.com/your-username/your-repo.git
+git clone https://github.com/SergeyZaika/install-on-ubuntu20.04_wordpress_with_nginx_mariadb_php.git
 cd your-repo
 Update the hosts file with your server(s) information:
 
