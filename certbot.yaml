@@ -3,9 +3,19 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: your.domain # Replace with the appropriate IP address
-    wordpress_admin_email: email@email.com
+    domain: domain.name.net # Replace with the appropriate IP address
+    wordpress_admin_email: mail@mail.com
     php_version: "8.2"
+
+  pre_tasks:
+    - name: Ensure services are enabled to start at boot
+      service:
+        name: "{{ item }}"
+        enabled: yes
+      loop:
+        - nginx
+        - mariadb
+        - "php{{ php_version }}-fpm"
 
   tasks:
     # Ensure FastCGI configuration is present
@@ -40,12 +50,14 @@
       args:
         creates: /etc/letsencrypt/ssl-dhparams.pem
 
+    # Clean up existing Let's Encrypt live directory
     - name: Remove existing Let's Encrypt live directory (if exists)
       file:
         path: /etc/letsencrypt/live/{{ domain }}
         state: absent
       ignore_errors: yes
 
+    # Create Let's Encrypt live directory structure
     - name: Create Let's Encrypt live directory structure
       file:
         path: /etc/letsencrypt/live/{{ domain }}
@@ -86,12 +98,6 @@
         state: link
       notify: Reload Nginx
 
-    - name: Remove default Nginx site
-      file:
-        path: /etc/nginx/sites-enabled/default
-        state: absent
-      notify: Reload Nginx
-
     # Test Nginx configuration to ensure it's valid
     - name: Test Nginx configuration
       command: nginx -t
@@ -99,12 +105,7 @@
       failed_when: nginx_test.rc != 0
       notify: Reload Nginx
 
-    - name: Print Nginx test result
-      debug:
-        var: nginx_test
-
-    # Obtain SSL certificate using Certbot
-    - name: Obtain SSL certificate
+    - name: Obtain SSL certificate using Certbot
       command: certbot --nginx -d {{ domain }} --non-interactive --agree-tos --email {{ wordpress_admin_email }}
       register: certbot_output
       failed_when: certbot_output.rc != 0

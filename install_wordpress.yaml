@@ -3,7 +3,7 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: your.domain # Replace with the appropriate IP address
+    domain: domain.name.net # Replace with the appropriate IP address
     ubuntu_user: ubuntu
     php_version: "8.2" 
     php_packages:
@@ -16,11 +16,11 @@
       - "php{{ php_version }}-zip"
     db_name: wordpress # Replace with the appropriate name
     db_user: wpuser # Replace with the appropriate name
-    db_password: password
-    root_db_password: password
+    db_password: Password
+    root_db_password: Password
     wordpress_admin_user: admin
-    wordpress_admin_password: password
-    wordpress_admin_email: email@email.com
+    wordpress_admin_password: Password
+    wordpress_admin_email: mail@mail.com
     remote_wordpress_file: /tmp/latest.tar.gz
     wordpress_install_dir: /var/www/html/my_wordpress_site
 
@@ -126,6 +126,20 @@
         EOF
       args:
         executable: /bin/bash
+
+    - name: Start and enable services
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - nginx
+        - mariadb
+        - "php{{ php_version }}-fpm"
+      notify:
+        - Restart Nginx
+        - Restart PHP-FPM
+        - Restart MariaDB
 
     - name: Create MariaDB database
       community.mysql.mysql_db:
