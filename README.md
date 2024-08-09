@@ -9,19 +9,33 @@ Basic knowledge of Ansible and server configuration
 Variables
 General Variables
 domain: The domain name or IP address for your site.
+
 ubuntu_user: The username for your Ubuntu server (default: ubuntu).
+
 php_version: Version of PHP to be installed (e.g., "8.2").
+
 db_name: The name of the WordPress database.
+
 db_user: The username for the WordPress database.
+
 db_password: The password for the WordPress database user.
+
 root_db_password: The root password for MariaDB.
+
 wordpress_admin_user: The admin username for WordPress.
+
 wordpress_admin_password: The admin password for WordPress.
+
 wordpress_admin_email: The admin email for WordPress.
+
 remote_wordpress_file: Path to the downloaded WordPress archive.
+
+Note: You need to prepare the WordPress archive yourself and download it to the specified path. The file should be in .tar.gz format.
+
 second_wordpress_install_dir: Installation directory for the second WordPress site.
+
 Usage
-1. Install the First WordPress Site
+Install the First WordPress Site
 To install the first WordPress site:
 
 bash
@@ -29,7 +43,7 @@ Copy code
 ansible-playbook -i hosts install_wordpress.yaml
 This playbook sets up the first WordPress site at the specified domain. It installs Nginx, MariaDB, PHP, and configures the server.
 
-2. Obtain SSL Certificates
+Obtain SSL Certificates
 To secure your site with SSL, run:
 
 bash
@@ -37,7 +51,7 @@ Copy code
 ansible-playbook -i hosts certbot.yaml
 This playbook uses Certbot to obtain and install an SSL certificate for your WordPress site.
 
-3. Install the Second WordPress Site
+Install the Second WordPress Site
 To install a second WordPress site on the same server:
 
 bash
@@ -45,7 +59,7 @@ Copy code
 ansible-playbook -i hosts install_second_wordpress.yaml
 This playbook sets up a second WordPress site with its own database and user credentials, without interfering with the first site.
 
-4. Clean Up the Host for Reinstallation
+Clean Up the Host for Reinstallation
 If you need to clean up the server for a fresh installation:
 
 bash
@@ -69,18 +83,22 @@ You can use these playbooks to manage multiple WordPress sites on the same serve
 
 Example Workflow
 Install the first WordPress site:
+
 bash
 Copy code
 ansible-playbook -i hosts install_wordpress.yaml
 Obtain an SSL certificate:
+
 bash
 Copy code
 ansible-playbook -i hosts certbot.yaml
 Install the second WordPress site:
+
 bash
 Copy code
 ansible-playbook -i hosts install_second_wordpress.yaml
 If needed, clean up the server:
+
 bash
 Copy code
 ansible-playbook -i hosts cleanup_host.yaml
