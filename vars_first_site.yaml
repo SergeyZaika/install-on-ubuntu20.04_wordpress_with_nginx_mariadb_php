@@ -1,0 +1,20 @@
+domain: electro.insidenet.net
+ubuntu_user: ubuntu
+php_version: "8.2"
+php_packages:
+  - "php{{ php_version }}"
+  - "php{{ php_version }}-fpm"
+  - "php{{ php_version }}-mysql"
+  - "php{{ php_version }}-xml"
+  - "php{{ php_version }}-mbstring"
+  - "php{{ php_version }}-curl"
+  - "php{{ php_version }}-zip"
+db_name: wordpress
+db_user: wpuser
+db_password: XXX
+root_db_password: XXX
+wordpress_admin_user: admin
+wordpress_admin_password: XXX
+wordpress_admin_email: x@x.com
+remote_wordpress_file: /tmp/latest.tar.gz
+wordpress_install_dir: /var/www/html/electrician_web-site

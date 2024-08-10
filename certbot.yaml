@@ -3,10 +3,7 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: XXX.XXX.net
-    wordpress_install_dir: /var/www/html/electrician_web-site
-    wordpress_admin_email: XXX@XXX.com
-    php_version: "8.2"
+    - vars_first_site.yaml
 
   pre_tasks:
     - name: Ensure services are enabled to start at boot
