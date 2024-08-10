@@ -3,8 +3,9 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: domain.name.net # Replace with the appropriate IP address
-    wordpress_admin_email: mail@mail.com
+    domain: domain.name.org
+    wordpress_install_dir: /var/www/html/web-site1
+    wordpress_admin_email: email@email.com
     php_version: "8.2"
 
   pre_tasks:
@@ -18,8 +19,7 @@
         - "php{{ php_version }}-fpm"
 
   tasks:
-    # Ensure FastCGI configuration is present
-    - name: Ensure fastcgi_params file exists
+    - name: Ensure FastCGI configuration is present
       template:
         src: templates/fastcgi_params.j2
         dest: /etc/nginx/fastcgi_params
@@ -31,7 +31,6 @@
         dest: /etc/nginx/snippets/fastcgi-php.conf
       notify: Reload Nginx
 
-    # Create Let's Encrypt directory and SSL options
     - name: Create Let's Encrypt directory
       file:
         path: /etc/letsencrypt
@@ -50,14 +49,12 @@
       args:
         creates: /etc/letsencrypt/ssl-dhparams.pem
 
-    # Clean up existing Let's Encrypt live directory
-    - name: Remove existing Let's Encrypt live directory (if exists)
+    - name: Clear all previously created certificates
       file:
-        path: /etc/letsencrypt/live/{{ domain }}
+        path: /etc/letsencrypt/live
         state: absent
       ignore_errors: yes
 
-    # Create Let's Encrypt live directory structure
     - name: Create Let's Encrypt live directory structure
       file:
         path: /etc/letsencrypt/live/{{ domain }}
@@ -66,7 +63,6 @@
         owner: root
         group: root
 
-    # Generate a self-signed certificate as a placeholder
     - name: Generate self-signed certificate
       command: >
         openssl req -x509 -nodes -days 1 -newkey rsa:2048
@@ -76,7 +72,6 @@
       args:
         creates: /etc/letsencrypt/live/{{ domain }}/fullchain.pem
 
-    # Install Certbot and required plugins
     - name: Install Certbot and nginx plugin
       apt:
         name:
@@ -84,8 +79,7 @@
           - python3-certbot-nginx
         state: present
 
-    # Configure Nginx for WordPress
-    - name: Configure Nginx for WordPress
+    - name: Configure Nginx for WordPress with HTTP redirect to HTTPS
       template:
         src: templates/nginx_wordpress_ssl.j2
         dest: /etc/nginx/sites-available/wordpress
@@ -98,21 +92,33 @@
         state: link
       notify: Reload Nginx
 
-    # Test Nginx configuration to ensure it's valid
     - name: Test Nginx configuration
       command: nginx -t
       register: nginx_test
       failed_when: nginx_test.rc != 0
       notify: Reload Nginx
 
+    - name: Wait for Nginx to fully reload
+      pause:
+        seconds: 5
+
     - name: Obtain SSL certificate using Certbot
-      command: certbot --nginx -d {{ domain }} --non-interactive --agree-tos --email {{ wordpress_admin_email }}
+      command: certbot --nginx -d {{ domain }} --non-interactive --agree-tos --email {{ wordpress_admin_email }} -v
       register: certbot_output
       failed_when: certbot_output.rc != 0
 
     - name: Print Certbot output
       debug:
         var: certbot_output
+
+    - name: Uncomment SSL lines in Nginx configuration
+      lineinfile:
+        path: /etc/nginx/sites-available/wordpress
+        state: present
+        backrefs: yes
+        regexp: '^(#\s*)?(ssl_certificate|ssl_certificate_key)'
+        line: '\1\2'
+      notify: Reload Nginx
 
   handlers:
     - name: Reload Nginx

@@ -1,7 +1,7 @@
 server {
     listen 80;
     server_name {{ domain }};
-    root /var/www/html/my_wordpress_site;
+    root {{ wordpress_install_dir }};
 
     index index.php index.html index.htm;
 

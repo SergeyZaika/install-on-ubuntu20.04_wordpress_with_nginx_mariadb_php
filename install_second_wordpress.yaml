@@ -3,18 +3,18 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: domain.name.net # Replace with the appropriate IP address
+    domain: domain.name.org # Replace with the appropriate IP address
     ubuntu_user: ubuntu
     php_version: "8.2"
     db_name: wordpress_second
-    db_user: wpuser_second
-    db_password: Password
-    root_db_password: Password
+    db_user: wpuser
+    db_password: XXX
+    root_db_password: XXX
     wordpress_admin_user: admin
-    wordpress_admin_password: Password
-    wordpress_admin_email: admin@example.com
+    wordpress_admin_password: XXX
+    wordpress_admin_email: email@email.com
     remote_wordpress_file: /tmp/latest.tar.gz
-    second_wordpress_install_dir: /var/www/html/second_wordpress_site
+    second_wordpress_install_dir: /var/www/html/site2
 
   tasks:
     - name: Create MariaDB database for second site

@@ -8,7 +8,7 @@ server {
     listen 443 ssl;
     server_name {{ domain }};
 
-    root /var/www/html/second_wordpress_site;
+    root {{ wordpress_install_dir }};
     index index.php index.html index.htm;
 
     ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem; # managed by Certbot
