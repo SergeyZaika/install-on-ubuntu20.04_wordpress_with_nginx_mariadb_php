@@ -3,7 +3,7 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: domain.name.org # Replace with the appropriate IP address
+    domain: XXX.XXX.net # Replace with the appropriate IP address
     ubuntu_user: ubuntu
     php_version: "8.2" 
     php_packages:
@@ -19,10 +19,10 @@
     db_password: XXX
     root_db_password: XXX
     wordpress_admin_user: admin
-    wordpress_admin_password: XXX
-    wordpress_admin_email: email@email.com
+    wordpress_admin_password: 
+    wordpress_admin_email: XXX@XXX.com
     remote_wordpress_file: /tmp/latest.tar.gz
-    wordpress_install_dir: /var/www/html/web-site1
+    wordpress_install_dir: /var/www/html/electrician_web-site
 
   tasks:
     - name: Update and upgrade APT packages

@@ -3,9 +3,9 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: domain.name.org
-    wordpress_install_dir: /var/www/html/web-site1
-    wordpress_admin_email: email@email.com
+    domain: XXX.XXX.net
+    wordpress_install_dir: /var/www/html/electrician_web-site
+    wordpress_admin_email: XXX@XXX.com
     php_version: "8.2"
 
   pre_tasks:
@@ -49,58 +49,27 @@
       args:
         creates: /etc/letsencrypt/ssl-dhparams.pem
 
-    - name: Clear all previously created certificates
-      file:
-        path: /etc/letsencrypt/live
-        state: absent
-      ignore_errors: yes
-
-    - name: Create Let's Encrypt live directory structure
-      file:
-        path: /etc/letsencrypt/live/{{ domain }}
-        state: directory
-        mode: '0755'
-        owner: root
-        group: root
-
-    - name: Generate self-signed certificate
-      command: >
-        openssl req -x509 -nodes -days 1 -newkey rsa:2048
-        -keyout /etc/letsencrypt/live/{{ domain }}/privkey.pem
-        -out /etc/letsencrypt/live/{{ domain }}/fullchain.pem
-        -subj "/CN={{ domain }}"
-      args:
-        creates: /etc/letsencrypt/live/{{ domain }}/fullchain.pem
-
-    - name: Install Certbot and nginx plugin
-      apt:
-        name:
-          - certbot
-          - python3-certbot-nginx
-        state: present
-
-    - name: Configure Nginx for WordPress with HTTP redirect to HTTPS
+    - name: Configure Nginx without SSL
       template:
-        src: templates/nginx_wordpress_ssl.j2
+        src: templates/nginx_wordpress.j2
         dest: /etc/nginx/sites-available/wordpress
       notify: Reload Nginx
 
-    - name: Enable WordPress Nginx site
-      file:
-        src: /etc/nginx/sites-available/wordpress
-        dest: /etc/nginx/sites-enabled/wordpress
-        state: link
-      notify: Reload Nginx
-
-    - name: Test Nginx configuration
+    - name: Test Nginx configuration before Certbot run
       command: nginx -t
       register: nginx_test
       failed_when: nginx_test.rc != 0
       notify: Reload Nginx
 
-    - name: Wait for Nginx to fully reload
-      pause:
-        seconds: 5
+    - name: Remove leftover directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/letsencrypt/live
+        - /etc/letsencrypt/archive
+        - /etc/letsencrypt/renewal
+      ignore_errors: yes
 
     - name: Obtain SSL certificate using Certbot
       command: certbot --nginx -d {{ domain }} --non-interactive --agree-tos --email {{ wordpress_admin_email }} -v
@@ -111,13 +80,16 @@
       debug:
         var: certbot_output
 
-    - name: Uncomment SSL lines in Nginx configuration
-      lineinfile:
-        path: /etc/nginx/sites-available/wordpress
-        state: present
-        backrefs: yes
-        regexp: '^(#\s*)?(ssl_certificate|ssl_certificate_key)'
-        line: '\1\2'
+    - name: Configure Nginx with SSL
+      template:
+        src: templates/nginx_wordpress_ssl.j2
+        dest: /etc/nginx/sites-available/wordpress
+      notify: Reload Nginx
+
+    - name: Test Nginx configuration after Certbot run
+      command: nginx -t
+      register: nginx_test_after_certbot
+      failed_when: nginx_test_after_certbot.rc != 0
       notify: Reload Nginx
 
   handlers:

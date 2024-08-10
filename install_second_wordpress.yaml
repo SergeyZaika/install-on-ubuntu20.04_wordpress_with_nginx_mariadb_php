@@ -3,7 +3,7 @@
   hosts: web_sites
   become: yes
   vars:
-    domain: domain.name.org # Replace with the appropriate IP address
+    domain: XXX.XXX.net # Replace with the appropriate IP address
     ubuntu_user: ubuntu
     php_version: "8.2"
     db_name: wordpress_second
@@ -12,9 +12,9 @@
     root_db_password: XXX
     wordpress_admin_user: admin
     wordpress_admin_password: XXX
-    wordpress_admin_email: email@email.com
+    wordpress_admin_email: XXX@XXX.com
     remote_wordpress_file: /tmp/latest.tar.gz
-    second_wordpress_install_dir: /var/www/html/site2
+    wordpress_install_dir: /var/www/html/plumber_web-site #should be different than for the first site
 
   tasks:
     - name: Create MariaDB database for second site
@@ -35,14 +35,14 @@
         column_case_sensitive: false
       notify: Restart MariaDB
 
-    - name: Download latest WordPress for second site
-      get_url:
-        url: https://wordpress.org/latest.tar.gz
-        dest: "{{ remote_wordpress_file }}"
+#    - name: Download latest WordPress for second site
+#      get_url:
+#        url: https://wordpress.org/latest.tar.gz
+#        dest: "{{ remote_wordpress_file }}"
 
     - name: Ensure second WordPress install directory exists
       file:
-        path: "{{ second_wordpress_install_dir }}"
+        path: "{{ wordpress_install_dir }}"
         state: directory
         owner: www-data
         group: www-data
@@ -51,13 +51,13 @@
     - name: Extract WordPress for second site
       unarchive:
         src: "{{ remote_wordpress_file }}"
-        dest: "{{ second_wordpress_install_dir }}"
+        dest: "{{ wordpress_install_dir }}"
         remote_src: yes
         extra_opts: [ "--strip-components=1" ]
 
     - name: Set correct permissions for second site
       file:
-        path: "{{ second_wordpress_install_dir }}"
+        path: "{{ wordpress_install_dir }}"
         owner: www-data
         group: www-data
         state: directory
@@ -66,7 +66,7 @@
     - name: Create wp-config.php for second WordPress site
       template:
         src: templates/wp-config_second.j2
-        dest: "{{ second_wordpress_install_dir }}/wp-config.php"
+        dest: "{{ wordpress_install_dir }}/wp-config.php"
         owner: www-data
         group: www-data
         mode: '0644'
