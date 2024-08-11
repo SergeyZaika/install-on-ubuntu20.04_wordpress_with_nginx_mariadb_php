@@ -2,10 +2,16 @@
 - name: Setup Certbot for SSL
   hosts: web_sites
   become: yes
-  vars:
-    - vars_first_site.yaml
 
-  pre_tasks:
+  tasks:
+    - name: Include variables for the first site
+      include_vars:
+        file: vars_first_site.yaml
+
+    - name: Include secret variables
+      include_vars:
+        file: vars_secret.yaml
+
     - name: Ensure services are enabled to start at boot
       service:
         name: "{{ item }}"
@@ -15,7 +21,6 @@
         - mariadb
         - "php{{ php_version }}-fpm"
 
-  tasks:
     - name: Ensure FastCGI configuration is present
       template:
         src: templates/fastcgi_params.j2
@@ -49,7 +54,7 @@
     - name: Configure Nginx without SSL
       template:
         src: templates/nginx_wordpress.j2
-        dest: /etc/nginx/sites-available/wordpress
+        dest: /etc/nginx/sites-available/{{ domain }}
       notify: Reload Nginx
 
     - name: Test Nginx configuration before Certbot run
@@ -80,7 +85,7 @@
     - name: Configure Nginx with SSL
       template:
         src: templates/nginx_wordpress_ssl.j2
-        dest: /etc/nginx/sites-available/wordpress
+        dest: /etc/nginx/sites-available/{{ domain }}
       notify: Reload Nginx
 
     - name: Test Nginx configuration after Certbot run

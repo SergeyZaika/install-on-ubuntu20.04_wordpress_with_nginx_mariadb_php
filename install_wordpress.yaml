@@ -2,11 +2,16 @@
 - name: Install WordPress with Nginx, MariaDB, and PHP
   hosts: web_sites
   become: yes
-  vars:
-    - vars_first_site.yaml
-    - vars_secret.yaml
 
   tasks:
+    - name: Include variables for the first site
+      include_vars:
+        file: vars_first_site.yaml
+
+    - name: Include secret variables
+      include_vars:
+        file: vars_secret.yaml
+
     - name: Update and upgrade APT packages
       apt:
         update_cache: yes

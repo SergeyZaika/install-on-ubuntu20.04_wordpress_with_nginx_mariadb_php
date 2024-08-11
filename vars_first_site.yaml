@@ -1,4 +1,4 @@
-domain: electro.insidenet.net
+domain: domain.name.net
 ubuntu_user: ubuntu
 php_version: "8.2"
 php_packages:
@@ -11,10 +11,10 @@ php_packages:
   - "php{{ php_version }}-zip"
 db_name: wordpress
 db_user: wpuser
-db_password: XXX
-root_db_password: XXX
+db_password: Password
+root_db_password: Password
 wordpress_admin_user: admin
-wordpress_admin_password: XXX
-wordpress_admin_email: x@x.com
+wordpress_admin_password: Password
+wordpress_admin_email: email@email.com
 remote_wordpress_file: /tmp/latest.tar.gz
 wordpress_install_dir: /var/www/html/electrician_web-site

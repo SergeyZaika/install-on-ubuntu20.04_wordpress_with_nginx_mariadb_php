@@ -1,18 +1,18 @@
 server {
     listen 80;
-    server_name {{ domain }};
+    server_name {{ second_domain }};
     return 301 https://$host$request_uri; # Redirect all HTTP requests to HTTPS
 }
 
 server {
     listen 443 ssl;
-    server_name {{ domain }};
+    server_name {{ second_domain}};
 
     root {{ wordpress_install_dir }};
     index index.php index.html index.htm;
 
-    ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/{{ second_domain }}/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/{{ second_domain }}/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
@@ -32,6 +32,6 @@ server {
         deny all;
     }
 
-    access_log /var/log/nginx/{{ domain }}.access.log;
-    error_log /var/log/nginx/{{ domain }}.error.log;
+    access_log /var/log/nginx/{{ second_domain }}.access.log;
+    error_log /var/log/nginx/{{ second_domain }}.error.log;
 }
