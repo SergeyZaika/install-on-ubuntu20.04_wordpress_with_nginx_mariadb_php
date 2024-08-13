@@ -6,7 +6,7 @@
   tasks:
     - name: Include variables for the first site
       include_vars:
-        file: vars_first_site.yaml
+        file: vars.yaml
 
     - name: Include secret variables
       include_vars:

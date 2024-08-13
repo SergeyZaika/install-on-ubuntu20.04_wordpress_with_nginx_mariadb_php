@@ -1,0 +1,93 @@
+---
+- name: Backup WordPress Site
+  hosts: web_sites
+  become: yes
+
+  vars:
+    current_time: "{{ ansible_date_time.date }}_{{ ansible_date_time.time | replace(':', '-') }}"
+
+  tasks:
+    - name: Include variables for the first site
+      include_vars:
+        file: vars.yaml  
+
+    - name: Include secret variables
+      include_vars:
+        file: vars_secret_second.yaml #Change it for enother site
+
+    - name: Create backup directory if it doesn't exist on remote host
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Set the backup filenames
+      set_fact:
+        files_backup_name: "{{ domain }}-files-{{ current_time }}.tar.gz"
+        db_backup_name: "{{ domain }}-db-{{ current_time }}.tar.gz"
+
+    - name: Backup WordPress files
+      archive:
+        path: "{{ wordpress_install_dir }}"
+        dest: "{{ backup_dir }}/{{ files_backup_name }}"
+        format: gz
+        owner: root
+        group: root
+
+    - name: Dump the WordPress database
+      shell: >
+        mysqldump -u {{ db_user }} -p{{ db_password }} {{ db_name }} > {{ backup_dir }}/{{ db_name }}.sql
+      register: dump_result
+      changed_when: dump_result.rc == 0
+      failed_when: dump_result.rc != 0
+
+    - name: Compress the database dump
+      archive:
+        path: "{{ backup_dir }}/{{ db_name }}.sql"
+        dest: "{{ backup_dir }}/{{ db_backup_name }}"
+        format: gz
+        owner: root
+        group: root
+
+    - name: Remove uncompressed SQL file
+      file:
+        path: "{{ backup_dir }}/{{ db_name }}.sql"
+        state: absent
+
+    - name: Create backup directory on Ansible host if it doesn't exist
+      local_action:
+        module: file
+        path: "~/backup/{{ domain }}"
+        state: directory
+        mode: '0755'
+
+    - name: List backup files on remote host
+      command: ls -l {{ backup_dir }}
+      register: backup_files_list
+
+    - name: Show backup files list
+      debug:
+        var: backup_files_list.stdout_lines
+
+    - name: Copy backup files to Ansible host
+      fetch:
+        src: "{{ backup_dir }}/{{ files_backup_name }}"
+        dest: "~/backup/{{ domain }}/"
+        flat: yes
+
+    - name: Copy database backup to Ansible host
+      fetch:
+        src: "{{ backup_dir }}/{{ db_backup_name }}"
+        dest: "~/backup/{{ domain }}/"
+        flat: yes
+
+    - name: Remove temporary backup directory on remote host
+      file:
+        path: "{{ backup_dir }}"
+        state: absent
+
+    - name: Inform about successful backup
+      debug:
+        msg: "Backup for {{ domain }} completed, stored in ~/backup/{{ domain }} on the Ansible host and the temporary directory has been removed from the remote host."

@@ -6,15 +6,15 @@
   tasks:
     - name: Include variables for the first site
       include_vars:
-        file: vars_second_site.yaml
+        file: vars.yaml
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret.yaml
+        file: vars_secret_second.yaml
 
     - name: Create MariaDB database for second site
       community.mysql.mysql_db:
-        name: "{{ db_name_second }}"
+        name: "{{ db_name }}"
         state: present
         login_user: root
         login_password: "{{ root_db_password }}"
@@ -23,7 +23,7 @@
       community.mysql.mysql_user:
         name: "{{ db_user }}"
         password: "{{ db_password }}"
-        priv: "{{ db_name_second }}.*:ALL"
+        priv: "{{ db_name }}.*:ALL"
         state: present
         login_user: root
         login_password: "{{ root_db_password }}"
@@ -63,14 +63,14 @@
 
     - name: Configure Nginx for second WordPress site (temporary config for Certbot)
       template:
-        src: templates/nginx_wordpress_second.j2
-        dest: /etc/nginx/sites-available/{{ second_domain }}
+        src: templates/nginx_wordpress.j2
+        dest: /etc/nginx/sites-available/{{ domain }}
       notify: Reload Nginx
 
     - name: Enable second WordPress Nginx site
       file:
-        src: /etc/nginx/sites-available/{{ second_domain }}
-        dest: /etc/nginx/sites-enabled/{{ second_domain }}
+        src: /etc/nginx/sites-available/{{ domain }}
+        dest: /etc/nginx/sites-enabled/{{ domain }}
         state: link
       notify: Reload Nginx
 
@@ -93,7 +93,7 @@
         dest: /etc/letsencrypt/options-ssl-nginx.conf
 
     - name: Obtain SSL certificate for second site
-      command: sudo certbot --nginx -d {{ second_domain }} --non-interactive --agree-tos --email {{ wordpress_admin_email }}
+      command: sudo certbot --nginx -d {{ domain }} --non-interactive --agree-tos --email {{ wordpress_admin_email }}
       register: certbot_output
       failed_when: certbot_output.rc != 0
 
@@ -104,7 +104,7 @@
     - name: Configure Nginx for second WordPress site (final config with SSL)
       template:
         src: templates/nginx_wordpress_ssl_second.j2
-        dest: /etc/nginx/sites-available/{{ second_domain }}
+        dest: /etc/nginx/sites-available/{{ domain }}
       notify: Reload Nginx
 
     - name: Test Nginx configuration to ensure it's valid after final SSL setup
@@ -113,8 +113,7 @@
       failed_when: nginx_test_final.rc != 0
       notify: Reload Nginx
 
-    # NEW TASK: Reapply privileges to wpuser for the first WordPress site
-    - name: Reapply privileges to wpuser for the first WordPress database
+    - name: Reapply privileges to wpuser for the second WordPress database
       community.mysql.mysql_user:
         name: "{{ db_user }}"
         priv: "{{ db_name }}.*:ALL"
@@ -122,17 +121,6 @@
         login_user: root
         login_password: "{{ root_db_password }}"
       notify: Restart MariaDB
-
-   # NEW TASK: Reapply privileges to wpuser for the second WordPress site
-    - name: Reapply privileges to wpuser for the first WordPress database
-      community.mysql.mysql_user:
-        name: "{{ db_user }}"
-        priv: "{{ db_name_second }}.*:ALL"
-        state: present
-        login_user: root
-        login_password: "{{ root_db_password }}"
-      notify: Restart MariaDB
-
 
   handlers:
     - name: Reload Nginx
