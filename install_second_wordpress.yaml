@@ -103,7 +103,7 @@
 
     - name: Configure Nginx for second WordPress site (final config with SSL)
       template:
-        src: templates/nginx_wordpress_ssl_second.j2
+        src: templates/nginx_wordpress_ssl.j2
         dest: /etc/nginx/sites-available/{{ domain }}
       notify: Reload Nginx
 
