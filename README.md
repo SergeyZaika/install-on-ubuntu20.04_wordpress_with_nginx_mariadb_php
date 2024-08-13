@@ -1,5 +1,5 @@
 WordPress Installation with Nginx, MariaDB, and PHP on Ubuntu 20.04
-This repository contains Ansible playbooks and templates to set up one or more WordPress sites on an Ubuntu 20.04 server using Nginx, MariaDB, and PHP. Additionally, it includes a playbook for cleaning up the environment if you need to reinstall.
+This repository contains Ansible playbooks and templates to set up one or more WordPress sites on an Ubuntu 20.04 server using Nginx, MariaDB, and PHP. Additionally, it includes a playbook for cleaning up the environment if you need to reinstall, as well as a backup playbook.
 
 Requirements
 Ansible installed on your control machine
@@ -8,25 +8,22 @@ Open ports: 80 (HTTP), 443 (HTTPS) for web traffic
 Basic knowledge of Ansible and server configuration
 Variables
 General Variables
-domain: The domain name or IP address for your site.
+domain: The domain name or IP address for your first site.
 second_domain: The domain name or IP address for your second site.
 ubuntu_user: The username for your Ubuntu server (default: ubuntu).
 php_version: Version of PHP to be installed (e.g., "8.2").
-db_name: The name of the WordPress database.
-db_user: The username for the WordPress database.
-db_password: The password for the WordPress database user.
-root_db_password: The root password for MariaDB.
-wordpress_admin_user: The admin username for WordPress.
-wordpress_admin_password: The admin password for WordPress.
-wordpress_admin_email: The admin email for WordPress.
-remote_wordpress_file: Path to the downloaded WordPress archive. Note: You need to prepare the WordPress archive yourself and download it to the specified path. The file should be in .tar.gz format.
+db_name: The name of the WordPress database for the first site.
+db_name_second: The name of the WordPress database for the second site.
+db_user: The username for the WordPress databases.
 wordpress_install_dir: Installation directory for the WordPress site.
 second_wordpress_install_dir: Installation directory for the second WordPress site.
+backup_dir: Directory to store backup files on the remote host.
 Secret Variables
-The sensitive data (e.g., passwords) are stored in a separate vars_secret.yaml file, which is encrypted using Ansible Vault.
+The sensitive data (e.g., passwords) are managed using two separate files:
 
-Creating the vars_secret.yaml File
-You need to create the vars_secret.yaml file with the following structure:
+vars_secret.yaml: Secret variables for the first site.
+vars_secret_second.yaml: Secret variables for the second site.
+You need to create these files with the following structure:
 
 yaml
 Copy code
@@ -34,20 +31,20 @@ Copy code
 db_password: your_db_password
 root_db_password: your_root_db_password
 wordpress_admin_password: your_wordpress_admin_password
-To encrypt the vars_secret.yaml file with Ansible Vault, run:
+wordpress_admin_email: your_email
 
-bash
-Copy code
-ansible-vault encrypt vars_secret.yaml
-When running the playbooks, you'll need to provide the vault password using the --ask-vault-pass option.
-
+# vars_secret_second.yaml
+db_password: your_db_password_second
+root_db_password: your_root_db_password_second
+wordpress_admin_password: your_wordpress_admin_password_second
+wordpress_admin_email: your_email_second
 Usage
 Install the First WordPress Site
 To install the first WordPress site:
 
 bash
 Copy code
-ansible-playbook -i hosts install_wordpress.yaml --ask-vault-pass
+ansible-playbook -i hosts install_wordpress.yaml --vault-password-file ~/ansible/.vault_pass.txt
 This playbook sets up the first WordPress site at the specified domain. It installs Nginx, MariaDB, PHP, and configures the server.
 
 Obtain SSL Certificates
@@ -55,7 +52,7 @@ To secure your site with SSL, run:
 
 bash
 Copy code
-ansible-playbook -i hosts certbot.yaml --ask-vault-pass
+ansible-playbook -i hosts certbot.yaml --vault-password-file ~/ansible/.vault_pass.txt
 This playbook uses Certbot to obtain and install an SSL certificate for your WordPress site.
 
 Install the Second WordPress Site
@@ -63,7 +60,7 @@ To install a second WordPress site on the same server:
 
 bash
 Copy code
-ansible-playbook -i hosts install_second_wordpress.yaml --ask-vault-pass
+ansible-playbook -i hosts install_second_wordpress.yaml --vault-password-file ~/ansible/.vault_pass.txt
 This playbook sets up a second WordPress site with its own database and user credentials, without interfering with the first site.
 
 Clean Up the Host for Reinstallation
@@ -71,8 +68,16 @@ If you need to clean up the server for a fresh installation:
 
 bash
 Copy code
-ansible-playbook -i hosts cleanup_host.yaml --ask-vault-pass
+ansible-playbook -i hosts cleanup_host.yaml --vault-password-file ~/ansible/.vault_pass.txt
 This playbook stops and removes all installed services (Nginx, MariaDB, PHP), and deletes configuration and data files, returning the server to a clean state.
+
+Backup WordPress Site
+To create a backup of the WordPress site:
+
+bash
+Copy code
+ansible-playbook -i hosts backup_wordpress.yaml --vault-password-file ~/ansible/.vault_pass.txt
+This playbook will backup both the WordPress files and database for the site specified in vars.yaml and store the backups on the Ansible host.
 
 Templates Explanation
 fastcgi-php.conf.j2: Configuration snippet for handling PHP requests in Nginx.
@@ -82,7 +87,6 @@ nginx.conf.j2: Basic configuration file for Nginx.
 nginx_wordpress.j2: Nginx configuration for serving the first WordPress site (HTTP only).
 nginx_wordpress_ssl.j2: Nginx configuration for serving the first WordPress site with SSL.
 nginx_wordpress_ssl_second.j2: Nginx configuration for serving the second WordPress site with SSL.
-options-ssl-nginx.conf.j2: SSL configuration options for Nginx, used by Certbot.
 wp-config.php.j2: The main configuration file for WordPress, customized for the first site.
 wp-config_second.j2: Configuration file for the second WordPress site.
 Multiple Sites
@@ -93,19 +97,24 @@ Install the first WordPress site:
 
 bash
 Copy code
-ansible-playbook -i hosts install_wordpress.yaml --ask-vault-pass
+ansible-playbook -i hosts install_wordpress.yaml --vault-password-file ~/ansible/.vault_pass.txt
 Obtain an SSL certificate:
 
 bash
 Copy code
-ansible-playbook -i hosts certbot.yaml --ask-vault-pass
+ansible-playbook -i hosts certbot.yaml --vault-password-file ~/ansible/.vault_pass.txt
 Install the second WordPress site:
 
 bash
 Copy code
-ansible-playbook -i hosts install_second_wordpress.yaml --ask-vault-pass
+ansible-playbook -i hosts install_second_wordpress.yaml --vault-password-file ~/ansible/.vault_pass.txt
 If needed, clean up the server:
 
 bash
 Copy code
-ansible-playbook -i hosts cleanup_host.yaml --ask-vault-pass
+ansible-playbook -i hosts cleanup_host.yaml --vault-password-file ~/ansible/.vault_pass.txt
+Create a backup of the site:
+
+bash
+Copy code
+ansible-playbook -i hosts backup_wordpress.yaml --vault-password-file ~/ansible/.vault_pass.txt
