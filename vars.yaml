@@ -29,6 +29,11 @@ wordpress_admin_email: email@email.com
 remote_wordpress_file: /tmp/latest.tar.gz
 backup_dir: /tmp/wordpress_backup
 
+#Vars for restore from backup;
+wordpress_files_backup: your_backup_file_name.tar.gz  
+wordpress_db_backup: your_db_backup_file_name.sql.gz 
+
+#Vars for sudoers and php install 
 ubuntu_user: ubuntu
 php_version: "8.2"
 php_packages:

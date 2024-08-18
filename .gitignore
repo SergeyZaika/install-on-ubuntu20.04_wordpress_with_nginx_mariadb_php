@@ -1,2 +1,3 @@
 vars_secret.yaml
 ansible_commands.txt
+vars_secret_second.yaml

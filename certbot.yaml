@@ -63,15 +63,11 @@
       failed_when: nginx_test.rc != 0
       notify: Reload Nginx
 
-    - name: Remove leftover directories
-      file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - /etc/letsencrypt/live
-        - /etc/letsencrypt/archive
-        - /etc/letsencrypt/renewal
-      ignore_errors: yes
+    - name: Ensure Certbot Nginx plugin is installed
+      apt:
+        name: python3-certbot-nginx
+        state: present
+      notify: Reload Nginx
 
     - name: Obtain SSL certificate using Certbot
       command: certbot --nginx -d {{ domain }} --non-interactive --agree-tos --email {{ wordpress_admin_email }} -v

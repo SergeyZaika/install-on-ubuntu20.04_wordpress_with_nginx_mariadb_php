@@ -38,6 +38,11 @@
         group: www-data
         mode: '0755'
 
+    - name: Download latest WordPress
+      get_url:
+        url: https://wordpress.org/latest.tar.gz
+        dest: "{{ remote_wordpress_file }}"
+
     - name: Extract WordPress for second site
       unarchive:
         src: "{{ remote_wordpress_file }}"
@@ -55,7 +60,7 @@
 
     - name: Create wp-config.php for second WordPress site
       template:
-        src: templates/wp-config_second.j2
+        src: templates/wp-config.php.j2
         dest: "{{ wordpress_install_dir }}/wp-config.php"
         owner: www-data
         group: www-data

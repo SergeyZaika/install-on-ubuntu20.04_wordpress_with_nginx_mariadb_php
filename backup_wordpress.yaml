@@ -13,7 +13,7 @@
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret_second.yaml #Change it for enother site
+        file: vars_secret.yaml #Change it for enother site
 
     - name: Create backup directory if it doesn't exist on remote host
       file:
@@ -26,7 +26,7 @@
     - name: Set the backup filenames
       set_fact:
         files_backup_name: "{{ domain }}-files-{{ current_time }}.tar.gz"
-        db_backup_name: "{{ domain }}-db-{{ current_time }}.tar.gz"
+        db_backup_name: "{{ domain }}-db-{{ current_time }}"
 
     - name: Backup WordPress files
       archive:
@@ -38,23 +38,19 @@
 
     - name: Dump the WordPress database
       shell: >
-        mysqldump -u {{ db_user }} -p{{ db_password }} {{ db_name }} > {{ backup_dir }}/{{ db_name }}.sql
+        mysqldump -u {{ db_user }} -p{{ db_password }} {{ db_name }} > {{ backup_dir }}/{{ db_backup_name }}.sql
       register: dump_result
       changed_when: dump_result.rc == 0
       failed_when: dump_result.rc != 0
 
-    - name: Compress the database dump
-      archive:
-        path: "{{ backup_dir }}/{{ db_name }}.sql"
-        dest: "{{ backup_dir }}/{{ db_backup_name }}"
-        format: gz
-        owner: root
-        group: root
+    - name: Display the first few lines of the SQL dump file
+      command: head -n 20 {{ backup_dir }}/{{ db_backup_name }}.sql
+      register: sql_dump_preview
+      changed_when: false
 
-    - name: Remove uncompressed SQL file
-      file:
-        path: "{{ backup_dir }}/{{ db_name }}.sql"
-        state: absent
+    - name: Show SQL dump preview
+      debug:
+        var: sql_dump_preview.stdout_lines
 
     - name: Create backup directory on Ansible host if it doesn't exist
       local_action:
@@ -79,7 +75,7 @@
 
     - name: Copy database backup to Ansible host
       fetch:
-        src: "{{ backup_dir }}/{{ db_backup_name }}"
+        src: "{{ backup_dir }}/{{ db_backup_name }}.sql"
         dest: "~/backup/{{ domain }}/"
         flat: yes
 
