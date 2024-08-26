@@ -12,6 +12,12 @@
       include_vars:
         file: vars_secret.yaml
 
+    - name: Add PHP repository
+      apt_repository:
+        repo: ppa:ondrej/php
+        state: present
+        update_cache: yes
+
     # Add NOPASS user to sudoers
     - name: Add NOPASS user to sudoers
       lineinfile:
