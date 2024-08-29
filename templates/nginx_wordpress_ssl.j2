@@ -1,7 +1,18 @@
 server {
     listen 80;
-    server_name {{ domain }};
-    return 301 https://$host$request_uri; # Redirect all HTTP requests to HTTPS
+    server_name {{ domain }} www.{{ domain }};
+    return 301 https://{{ domain }}$request_uri; # Redirect all HTTP requests to HTTPS without $host variable
+}
+
+server {
+    listen 443;
+    server_name www.{{ domain }};
+    return 301 https://{{ domain }}$request_uri; # Redirect 
+
+    ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 }
 
 server {
