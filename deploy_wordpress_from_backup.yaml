@@ -49,6 +49,12 @@
         name: "{{ php_packages }}"
         state: present
       notify: Restart PHP-FPM
+
+    - name: Copy PHP-FPM configuration for deployment
+      template:
+        src: templates/php.ini.j2
+        dest: /etc/php/{{ php_version }}/fpm/php.ini
+      notify: Restart PHP-FPM
     
     # Check if MariaDB is installed
     - name: Check if MariaDB is installed

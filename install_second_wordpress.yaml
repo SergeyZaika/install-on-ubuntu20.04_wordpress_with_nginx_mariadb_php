@@ -66,6 +66,12 @@
         group: www-data
         mode: '0644'
 
+    - name: Copy PHP-FPM configuration
+      template:
+        src: templates/php.ini.j2
+        dest: /etc/php/{{ php_version }}/fpm/php.ini
+      notify: Restart PHP-FPM
+
     - name: Configure Nginx for second WordPress site (temporary config for Certbot)
       template:
         src: templates/nginx_wordpress.j2
