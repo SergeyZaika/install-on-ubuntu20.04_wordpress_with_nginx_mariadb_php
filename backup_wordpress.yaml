@@ -67,6 +67,45 @@
       debug:
         var: backup_files_list.stdout_lines
 
+    - name: Check if swap is already configured
+      command: swapon --show
+      register: swap_status
+      failed_when: false
+
+    - name: Create a 2GB swap file if none exists
+      command: fallocate -l 2G /swapfile
+      when: swap_status.stdout == ''
+      become: yes
+
+    - name: Set the correct permissions on the swap file
+      file:
+        path: /swapfile
+        mode: '0600'
+      when: swap_status.stdout == ''
+      become: yes
+
+    - name: Format the swap file
+      command: mkswap /swapfile
+      when: swap_status.stdout == ''
+      become: yes
+
+    - name: Enable the swap file
+      command: swapon /swapfile
+      when: swap_status.stdout == ''
+      become: yes
+
+    - name: Add swap entry to /etc/fstab for persistence
+      lineinfile:
+        path: /etc/fstab
+        line: '/swapfile swap swap defaults 0 0'
+        create: yes
+      when: swap_status.stdout == ''
+      become: yes
+
+    - name: Verify swap status
+      command: swapon --show
+      become: yes
+
     - name: Copy backup files to Ansible host
       fetch:
         src: "{{ backup_dir }}/{{ files_backup_name }}"
