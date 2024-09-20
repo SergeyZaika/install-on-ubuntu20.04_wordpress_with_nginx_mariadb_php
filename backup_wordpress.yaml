@@ -1,6 +1,6 @@
 ---
 - name: Backup WordPress Site
-  hosts: web_sites
+  hosts: web_sites #Change it for enother site #web_sites
   become: yes
 
   vars:
@@ -13,7 +13,7 @@
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret.yaml #Change it for enother site
+        file: vars_secret.yaml #Change it for enother site 
 
     - name: Create backup directory if it doesn't exist on remote host
       file:
@@ -25,7 +25,7 @@
 
     - name: Set the backup filenames
       set_fact:
-        files_backup_name: "{{ domain }}-files-{{ current_time }}.tar.gz"
+        files_backup_name: "{{ domain }}-fs-{{ current_time }}.tar.gz"
         db_backup_name: "{{ domain }}-db-{{ current_time }}"
 
     - name: Backup WordPress files
