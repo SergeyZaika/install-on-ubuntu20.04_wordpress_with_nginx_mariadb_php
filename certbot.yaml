@@ -10,7 +10,7 @@
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret.yaml #Change it for enother site 
+        file: vars_secret_electrician.yaml #Change it for enother site 
 
     - name: Ensure services are enabled to start at boot
       service:
