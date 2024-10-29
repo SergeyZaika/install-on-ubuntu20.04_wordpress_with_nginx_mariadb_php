@@ -1,5 +1,5 @@
 ---
-- name: Backup WordPress Site
+- name: Backup Site
   hosts: web_sites #Change it for enother site #web_sites
   become: yes
 
@@ -13,7 +13,7 @@
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret.yaml #Change it for enother site 
+        file: vars_secret_electrician.yaml #Change it for enother site #vars_secret.yaml
 
     - name: Create backup directory if it doesn't exist on remote host
       file:
@@ -106,11 +106,10 @@
       command: swapon --show
       become: yes
 
-    - name: Copy backup files to Ansible host
-      fetch:
-        src: "{{ backup_dir }}/{{ files_backup_name }}"
-        dest: "~/backup/{{ domain }}/"
-        flat: yes
+    - name: Copy files backup to Ansible host using SCP
+      shell: >
+        scp -o StrictHostKeyChecking=no -i {{ ansible_ssh_private_key_file }} {{ ansible_user }}@{{ inventory_hostname }}:{{ backup_dir }}/{{ files_backup_name }} ~/backup/{{ domain }}/
+      delegate_to: localhost
 
     - name: Copy database backup to Ansible host
       fetch:
