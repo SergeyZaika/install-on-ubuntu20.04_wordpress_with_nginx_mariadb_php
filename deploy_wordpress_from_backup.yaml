@@ -1,6 +1,6 @@
 ---
 - name: Deploy WordPress from Backup
-  hosts: web_sites
+  hosts: web_sites  # Change for another site
   become: yes
 
   tasks:
@@ -10,7 +10,7 @@
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret_new_kmshvsm.yaml
+        file: vars_secret_new_kmshvsm.yaml  # Change for another site
 
     - name: Add PHP repository
       apt_repository:
@@ -18,6 +18,7 @@
         state: present
         update_cache: yes
 
+    # Add NOPASS user to sudoers
     - name: Add NOPASS user to sudoers
       lineinfile:
         path: /etc/sudoers
@@ -25,17 +26,18 @@
         regexp: '^%sudo'
         line: '%sudo ALL=(ALL:ALL) NOPASSWD:ALL'
 
+    # Update and upgrade APT packages
     - name: Update and upgrade APT packages
       apt:
         update_cache: yes
 
+    # Install necessary packages
     - name: Install necessary packages
       apt:
         name:
           - nginx
           - python3-pymysql
           - software-properties-common
-          - python3-pymysql
           - unzip
           - tar
         state: present
@@ -53,23 +55,27 @@
         dest: /etc/php/{{ php_version }}/fpm/php.ini
       notify: Restart PHP-FPM
 
+    # Check if MariaDB is installed
     - name: Check if MariaDB is installed
       command: dpkg -l | grep mariadb-server
       register: mariadb_installed
       ignore_errors: yes
 
+    # Install MariaDB if not present
     - name: Install MariaDB if not present
       apt:
         name: mariadb-server
         state: present
       when: mariadb_installed.rc != 0
 
+    # Ensure MariaDB is started and enabled
     - name: Ensure MariaDB is started and enabled
       service:
         name: mariadb
         state: started
         enabled: yes
 
+    # Update MariaDB root authentication method
     - name: Update MySQL root authentication method
       shell: |
         sudo mysql --user=root <<-EOF
@@ -82,6 +88,7 @@
       failed_when: mariadb_auth_update.rc != 0
       changed_when: mariadb_auth_update.rc == 0
 
+    # Create /root/.my.cnf with MySQL root credentials
     - name: Create /root/.my.cnf with MySQL root credentials
       copy:
         content: |
@@ -91,6 +98,7 @@
         dest: /root/.my.cnf
         mode: '0600'
 
+    # Create MariaDB database
     - name: Create MariaDB database
       community.mysql.mysql_db:
         name: "{{ db_name }}"
@@ -98,6 +106,7 @@
         login_user: root
         login_password: "{{ root_db_password }}"
 
+    # Grant privileges to wpuser
     - name: Grant privileges to wpuser
       community.mysql.mysql_user:
         name: "{{ db_user }}"
@@ -109,21 +118,25 @@
         host: localhost
         column_case_sensitive: false
 
+    # Copy WordPress files backup to remote host
     - name: Copy WordPress files backup to remote host
       copy:
         src: "~/backup/{{ domain }}/{{ wordpress_files_backup }}"
         dest: "/tmp/{{ wordpress_files_backup }}"
 
+    # Copy WordPress database backup to remote host
     - name: Copy WordPress database backup to remote host
       copy:
         src: "~/backup/{{ domain }}/{{ wordpress_db_backup }}"
         dest: "/tmp/{{ wordpress_db_backup }}"
 
+    # Fail if WordPress files backup is not found
     - name: Fail if WordPress files backup is not found
       stat:
         path: "/tmp/{{ wordpress_files_backup }}"
       register: files_backup_check
 
+    # Fail if WordPress database backup is not found
     - name: Fail if WordPress database backup is not found
       stat:
         path: "/tmp/{{ wordpress_db_backup }}"
@@ -139,23 +152,40 @@
         msg: "Database backup file not found on remote host!"
       when: not db_backup_check.stat.exists
 
+    # Ensure WordPress install directory exists
     - name: Ensure WordPress install directory exists
       file:
-        path: "{{ wordpress_install_dir }}"
+        path: "/var/www/html/electrician_web-site"
         state: directory
         owner: www-data
         group: www-data
         mode: '0755'
 
+    # Unarchive WordPress files backup
     - name: Unarchive WordPress files backup
       unarchive:
         src: "/tmp/{{ wordpress_files_backup }}"
-        dest: "{{ wordpress_install_dir }}"
+        dest: "/var/www/html/electrician_web-site"
         remote_src: yes
         extra_opts: [ "--strip-components=1" ]
-        owner: www-data
-        group: www-data
+      register: unarchive_result
+      changed_when: unarchive_result.rc == 0
+      failed_when: unarchive_result.rc != 0
+      owner: www-data
+      group: www-data
 
+    # Check if unarchive was successful
+    - name: Check if WordPress files were extracted
+      stat:
+        path: "/var/www/html/electrician_web-site/index.php"
+      register: files_extraction_check
+
+    - name: Fail if WordPress files were not extracted
+      fail:
+        msg: "Failed to extract WordPress files from the backup!"
+      when: not files_extraction_check.stat.exists
+
+    # Import the WordPress database backup
     - name: Import WordPress database backup
       shell: >
         mysql -u {{ db_user }} -p{{ db_password }} {{ db_name }} < /tmp/{{ wordpress_db_backup }}
@@ -163,6 +193,7 @@
       changed_when: import_result.rc == 0
       failed_when: import_result.rc != 0
 
+    # Create Let's Encrypt directory
     - name: Create Let's Encrypt directory
       file:
         path: /etc/letsencrypt
@@ -171,6 +202,7 @@
         owner: root
         group: root
 
+    # Deploy Nginx configuration templates
     - name: Deploy main Nginx configuration
       template:
         src: templates/nginx.conf.j2
@@ -188,6 +220,7 @@
         dest: /etc/nginx/sites-available/{{ domain }}
       notify: Reload Nginx
 
+    # Create a symbolic link in sites-enabled
     - name: Create symbolic link for Nginx site configuration
       file:
         src: "/etc/nginx/sites-available/{{ domain }}"
