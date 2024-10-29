@@ -106,10 +106,28 @@
       command: swapon --show
       become: yes
 
-    - name: Copy files backup to Ansible host using SCP
-      shell: >
-        scp -o StrictHostKeyChecking=no -i {{ ansible_ssh_private_key_file }} {{ ansible_user }}@{{ inventory_hostname }}:{{ backup_dir }}/{{ files_backup_name }} ~/backup/{{ domain }}/
+# Use RCYNC to copy files
+
+    - name: Install rsync on remote host (Debian-based)
+      apt:
+        name: rsync
+        state: present
+
+    - name: Install rsync on remote host
+      apt:
+        name: rsync
+        state: present
+      become: yes
+      
+    - name: Copy files backup to Ansible host using rsync
+      command: >
+        rsync -avz -e "ssh -o StrictHostKeyChecking=no -i {{ ansible_ssh_private_key_file }}" {{ ansible_user }}@{{ inventory_hostname }}:{{ backup_dir }}/{{ files_backup_name }} /home/sergey/backup/{{ domain }}/
       delegate_to: localhost
+      register: rsync_result
+
+    - name: Show rsync result
+      debug:
+        var: rsync_result
 
     - name: Copy database backup to Ansible host
       fetch:
@@ -117,10 +135,10 @@
         dest: "~/backup/{{ domain }}/"
         flat: yes
 
-    - name: Remove temporary backup directory on remote host
-      file:
-        path: "{{ backup_dir }}"
-        state: absent
+#    - name: Remove temporary backup directory on remote host
+#      file:
+#       path: "{{ backup_dir }}"
+#        state: absent
 
     - name: Inform about successful backup
       debug:
