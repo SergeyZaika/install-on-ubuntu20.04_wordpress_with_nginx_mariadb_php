@@ -1,16 +1,16 @@
 ---
 - name: Install Second WordPress Site with Nginx, MariaDB, and PHP
-  hosts: web_sites
+  hosts: web_sites # Change for another site
   become: yes
 
   tasks:
-    - name: Include variables for the first site
+    - name: Include variables
       include_vars:
         file: vars.yaml
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret_second.yaml
+        file: vars_secret_new_kmshvsm.yaml # Change for another site
 
     - name: Create MariaDB database for second site
       community.mysql.mysql_db:
