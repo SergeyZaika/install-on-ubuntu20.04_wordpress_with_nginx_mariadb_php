@@ -1,5 +1,5 @@
 - name: Deploy WordPress from Backup
-  hosts: web_sites  # Change for another site
+  hosts: XEN_KMSHVSM  # Change for another site
   become: yes
 
   tasks:
@@ -9,7 +9,7 @@
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret_electrician.yaml # Change for another site
+        file: vars_secret_KMSHVSM.yaml #Change it for enother site #vars_secret.yaml
 
     - name: Add PHP repository
       apt_repository:

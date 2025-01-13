@@ -1,6 +1,6 @@
 ---
 - name: Backup Site
-  hosts: web_sites #Change it for enother site #web_sites
+  hosts: web_sites #Change it for enother site #web_sites AWS_KMSHVSM
   become: yes
 
   vars:
@@ -13,7 +13,7 @@
 
     - name: Include secret variables
       include_vars:
-        file: vars_secret_electrician.yaml #Change it for enother site #vars_secret.yaml
+        file: vars_secret_new_kmshvsm.yaml #Change it for enother site #vars_secret_KMSHVSM.yaml
 
     - name: Create backup directory if it doesn't exist on remote host
       file:
